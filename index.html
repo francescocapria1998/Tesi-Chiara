@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f0e6">
+  <title>Tesi di Laurea - Chiara Cambareri</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+  <!-- StPageFlip -->
+  <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
+</head>
+
+<body>
+  <main class="viewer-shell">
+    <header class="viewer-header">
+      <div class="title-wrap">
+        <div class="eyebrow">TESI DI LAUREA</div>
+        <h1>Chiara Cambareri</h1>
+      </div>
+
+      <a class="download-button" href="tesi.pdf" download="Tesi_Chiara_Cambareri.pdf" aria-label="Scarica la tesi in PDF">
+        <span class="download-icon" aria-hidden="true">↓</span>
+        <span>Scarica PDF</span>
+      </a>
+    </header>
+
+    <section class="book-area" aria-label="Tesi sfogliabile">
+      <button class="nav nav-prev" id="prevBtn" type="button" aria-label="Pagina precedente">‹</button>
+
+      <div class="book-stage">
+        <div id="book" class="book" aria-live="polite"></div>
+
+        <div id="loading" class="loading" role="status">
+          <div class="spinner" aria-hidden="true"></div>
+          <span>Preparazione della tesi…</span>
+        </div>
+      </div>
+
+      <button class="nav nav-next" id="nextBtn" type="button" aria-label="Pagina successiva">›</button>
+    </section>
+
+    <footer class="toolbar">
+      <button id="firstBtn" class="tool-button" type="button" aria-label="Vai alla copertina">«</button>
+      <button id="prevSmallBtn" class="tool-button" type="button" aria-label="Pagina precedente">‹</button>
+
+      <div class="page-counter" aria-label="Indicatore pagina">
+        <span id="pageLabel">Copertina</span>
+        <span class="page-total">/ <span id="totalPages">62</span></span>
+      </div>
+
+      <button id="nextSmallBtn" class="tool-button" type="button" aria-label="Pagina successiva">›</button>
+      <button id="lastBtn" class="tool-button" type="button" aria-label="Vai all'ultima pagina">»</button>
+
+      <span class="toolbar-separator" aria-hidden="true"></span>
+
+      <button id="fullscreenBtn" class="tool-button fullscreen-button" type="button" aria-label="Schermo intero">
+        ⛶ <span>Schermo intero</span>
+      </button>
+    </footer>
+
+    <p class="hint">Trascina l'angolo della pagina oppure usa le frecce per sfogliare.</p>
+
+    <noscript>
+      <p class="noscript">Per sfogliare la tesi è necessario abilitare JavaScript.</p>
+    </noscript>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

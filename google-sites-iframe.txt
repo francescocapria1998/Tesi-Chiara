@@ -1,0 +1,18 @@
+CODICE PER GOOGLE SITES
+
+Dopo aver pubblicato la cartella su GitHub Pages, sostituisci
+TUO-USERNAME e chiara-tesi con i valori reali:
+
+<iframe
+  src="https://TUO-USERNAME.github.io/chiara-tesi/"
+  width="100%"
+  height="760"
+  style="border:0;"
+  allow="fullscreen"
+  allowfullscreen>
+</iframe>
+
+In alternativa, in Google Sites:
+Inserisci -> Incorpora -> URL
+e incolla direttamente:
+https://TUO-USERNAME.github.io/chiara-tesi/
