@@ -1,74 +1,33 @@
-FLIPBOOK TESI - CHIARA CAMBARERI
-===================================
+VERSIONE MINIMALE DEL FLIPBOOK
+==============================
 
-CONTENUTO
----------
-index.html   -> pagina del flipbook
-style.css    -> grafica avorio / bordeaux / oro
-app.js       -> caricamento PDF, sfoglio, navigazione e fullscreen
-tesi.pdf     -> PDF originale della tesi (copiato senza modificarlo)
+Questa versione mostra soltanto il libro sfogliabile:
+- copertina esterna personalizzata (cover.png)
+- pagine interne del PDF (tesi.pdf)
+- nessun titolo, pulsante o barra comandi
 
-Il viewer mostra 1 pagina su smartphone e 2 pagine su desktop.
-Le pagine PDF vengono renderizzate progressivamente per evitare di
-caricare in memoria tutte le 62 pagine contemporaneamente.
+FILE DA CARICARE SU GITHUB NEL REPOSITORY Tesi-Chiara:
+- index.html
+- style.css
+- app.js
+- tesi.pdf
+- cover.png
 
-COME PUBBLICARLO GRATIS CON GITHUB PAGES
-----------------------------------------
-1. Crea un nuovo repository GitHub, ad esempio:
-   chiara-tesi
+Se il repository contiene già file con lo stesso nome, sostituiscili.
 
-2. Carica NELLA ROOT del repository questi quattro file:
-   - index.html
-   - style.css
-   - app.js
-   - tesi.pdf
+GitHub Pages:
+L'URL del sito è:
+https://francescocapria1998.github.io/Tesi-Chiara/
 
-3. Su GitHub apri:
-   Settings -> Pages
-
-4. In "Build and deployment" scegli:
-   Source: Deploy from a branch
-   Branch: main
-   Folder: / (root)
-   quindi Save.
-
-5. Dopo qualche minuto il sito sarà disponibile a un indirizzo simile a:
-   https://TUO-USERNAME.github.io/chiara-tesi/
-
-GOOGLE SITES
-------------
-Metodo consigliato:
-Inserisci -> Incorpora -> URL
-e incolla l'indirizzo GitHub Pages.
-
-Oppure usa "Codice incorporato" con:
+Google Sites:
+Usa Inserisci -> Incorpora -> URL
+oppure il seguente iframe:
 
 <iframe
-  src="https://TUO-USERNAME.github.io/chiara-tesi/"
+  src="https://francescocapria1998.github.io/Tesi-Chiara/"
   width="100%"
-  height="760"
+  height="780"
   style="border:0;"
   allow="fullscreen"
   allowfullscreen>
 </iframe>
-
-Su Google Sites allarga il riquadro incorporato quasi a tutta pagina.
-Su mobile il flipbook passa automaticamente alla pagina singola.
-
-TEST LOCALE
------------
-Per motivi di sicurezza del browser, non aprire index.html direttamente
-con doppio click (file://), perché PDF.js potrebbe non poter leggere il PDF.
-
-Se hai Python installato:
-  python -m http.server 8000
-
-poi apri:
-  http://localhost:8000
-
-NOTE
-----
-- Il PDF non viene convertito né alterato dal flipbook.
-- Il pulsante "Scarica PDF" distribuisce lo stesso file tesi.pdf.
-- Per funzionare sono richieste connessione Internet e HTTPS, perché
-  PDF.js e StPageFlip vengono caricati da CDN pubbliche.

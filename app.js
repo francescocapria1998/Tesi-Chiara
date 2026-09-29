@@ -1,4 +1,3 @@
-
 (() => {
   "use strict";
 
@@ -10,26 +9,34 @@
 
   const bookEl = document.getElementById("book");
   const loadingEl = document.getElementById("loading");
-  const pageLabel = document.getElementById("pageLabel");
-  const totalPagesEl = document.getElementById("totalPages");
-
-  const prevBtn = document.getElementById("prevBtn");
-  const nextBtn = document.getElementById("nextBtn");
-  const prevSmallBtn = document.getElementById("prevSmallBtn");
-  const nextSmallBtn = document.getElementById("nextSmallBtn");
-  const firstBtn = document.getElementById("firstBtn");
-  const lastBtn = document.getElementById("lastBtn");
-  const fullscreenBtn = document.getElementById("fullscreenBtn");
-  const viewerShell = document.querySelector(".viewer-shell");
 
   let pdfDoc = null;
   let pageFlip = null;
   let numPages = 0;
   const renderJobs = new Map();
 
-  function createPageShell(pageNum) {
+  function createCoverPage() {
     const page = document.createElement("div");
-    page.className = "page";
+    page.className = "page cover-page rendered";
+    page.dataset.kind = "cover";
+
+    const inner = document.createElement("div");
+    inner.className = "page-inner";
+
+    const img = document.createElement("img");
+    img.className = "cover-image";
+    img.src = "cover.png";
+    img.alt = "Copertina della tesi";
+
+    inner.appendChild(img);
+    page.appendChild(inner);
+    return page;
+  }
+
+  function createPdfPageShell(pageNum) {
+    const page = document.createElement("div");
+    page.className = "page pdf-page";
+    page.dataset.kind = "pdf";
     page.dataset.page = String(pageNum);
 
     const inner = document.createElement("div");
@@ -41,43 +48,26 @@
 
     const placeholder = document.createElement("div");
     placeholder.className = "page-placeholder";
-    placeholder.textContent = pageNum === 1 ? "Copertina" : `Pagina ${pageNum}`;
+    placeholder.textContent = `Pagina ${pageNum}`;
 
     inner.append(canvas, placeholder);
     page.append(inner);
     return page;
   }
 
-  function currentLogicalPage() {
-    if (!pageFlip) return 1;
-    return Math.min(numPages, pageFlip.getCurrentPageIndex() + 1);
-  }
-
-  function updateCounter() {
-    const p = currentLogicalPage();
-    pageLabel.textContent = p === 1 ? "Copertina" : `Pagina ${p}`;
-    totalPagesEl.textContent = String(numPages);
-
-    const atStart = p <= 1;
-    const atEnd = p >= numPages;
-
-    [prevBtn, prevSmallBtn, firstBtn].forEach(b => b.disabled = atStart);
-    [nextBtn, nextSmallBtn, lastBtn].forEach(b => b.disabled = atEnd);
-  }
-
   function wantedCssPageWidth() {
-    const stage = document.querySelector(".book-stage");
+    const viewer = document.getElementById("viewer");
     const portrait = window.matchMedia("(max-width: 760px)").matches;
     const visiblePages = portrait ? 1 : 2;
-    const available = Math.max(300, stage.clientWidth - 24);
-    return Math.min(700, available / visiblePages);
+    const available = Math.max(320, viewer.clientWidth - 40);
+    return Math.min(720, available / visiblePages);
   }
 
   async function renderPage(pageNum) {
     if (!pdfDoc || pageNum < 1 || pageNum > numPages) return;
     if (renderJobs.has(pageNum)) return renderJobs.get(pageNum);
 
-    const el = bookEl.querySelector(`.page[data-page="${pageNum}"]`);
+    const el = bookEl.querySelector(`.pdf-page[data-page="${pageNum}"]`);
     if (!el || el.classList.contains("rendered")) return;
 
     const job = (async () => {
@@ -86,7 +76,7 @@
 
       const cssWidth = wantedCssPageWidth();
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const targetWidth = Math.min(1350, Math.max(760, cssWidth * dpr * 1.15));
+      const targetWidth = Math.min(1350, Math.max(760, cssWidth * dpr * 1.10));
       const scale = targetWidth / base.width;
       const viewport = pdfPage.getViewport({ scale });
 
@@ -104,22 +94,24 @@
 
       el.classList.add("rendered");
     })()
-    .catch(err => {
-      console.error(`Errore nel rendering della pagina ${pageNum}:`, err);
-    })
-    .finally(() => {
-      renderJobs.delete(pageNum);
-    });
+      .catch(err => console.error(`Errore nel rendering della pagina ${pageNum}:`, err))
+      .finally(() => renderJobs.delete(pageNum));
 
     renderJobs.set(pageNum, job);
     return job;
   }
 
-  function unloadFarPages(center) {
-    const pages = bookEl.querySelectorAll(".page");
+  function currentPdfPage() {
+    if (!pageFlip) return 1;
+    const index = pageFlip.getCurrentPageIndex();
+    return Math.max(1, Math.min(numPages, index));
+  }
+
+  function unloadFarPages(centerPage) {
+    const pages = bookEl.querySelectorAll(".pdf-page");
     pages.forEach(el => {
       const n = Number(el.dataset.page);
-      if (Math.abs(n - center) <= KEEP_RADIUS) return;
+      if (Math.abs(n - centerPage) <= KEEP_RADIUS) return;
 
       const canvas = el.querySelector("canvas");
       if (canvas && (canvas.width || canvas.height)) {
@@ -130,33 +122,13 @@
     });
   }
 
-  async function warmPages(center) {
+  async function warmPages(centerPage) {
     const jobs = [];
-    for (let n = center - KEEP_RADIUS; n <= center + KEEP_RADIUS; n++) {
+    for (let n = centerPage - KEEP_RADIUS; n <= centerPage + KEEP_RADIUS; n++) {
       if (n >= 1 && n <= numPages) jobs.push(renderPage(n));
     }
     await Promise.allSettled(jobs);
-    unloadFarPages(center);
-  }
-
-  function goPrev() {
-    if (pageFlip) pageFlip.flipPrev("top");
-  }
-
-  function goNext() {
-    if (pageFlip) pageFlip.flipNext("top");
-  }
-
-  async function toggleFullscreen() {
-    try {
-      if (!document.fullscreenElement) {
-        await viewerShell.requestFullscreen();
-      } else {
-        await document.exitFullscreen();
-      }
-    } catch (err) {
-      console.warn("Fullscreen non disponibile:", err);
-    }
+    unloadFarPages(centerPage);
   }
 
   async function init() {
@@ -170,31 +142,30 @@
 
       pdfDoc = await task.promise;
       numPages = pdfDoc.numPages;
-      totalPagesEl.textContent = String(numPages);
 
       const fragment = document.createDocumentFragment();
+      fragment.appendChild(createCoverPage());
       for (let i = 1; i <= numPages; i++) {
-        fragment.appendChild(createPageShell(i));
+        fragment.appendChild(createPdfPageShell(i));
       }
       bookEl.appendChild(fragment);
 
-      // Renderizza subito la copertina e le pagine adiacenti.
       await warmPages(1);
 
       pageFlip = new St.PageFlip(bookEl, {
         width: 595,
         height: 842,
         size: "stretch",
-        minWidth: 280,
-        maxWidth: 700,
-        minHeight: 396,
-        maxHeight: 990,
-        maxShadowOpacity: 0.32,
+        minWidth: 300,
+        maxWidth: 720,
+        minHeight: 425,
+        maxHeight: 1020,
         showCover: true,
-        mobileScrollSupport: false,
         usePortrait: true,
         autoSize: true,
         drawShadow: true,
+        maxShadowOpacity: 0.35,
+        mobileScrollSupport: false,
         flippingTime: 720,
         startZIndex: 0
       });
@@ -202,59 +173,25 @@
       pageFlip.loadFromHTML(bookEl.querySelectorAll(".page"));
 
       pageFlip.on("flip", async (event) => {
-        const logical = Math.min(numPages, Number(event.data) + 1);
-        await warmPages(logical);
-        updateCounter();
+        const centerPage = Math.max(1, Math.min(numPages, Number(event.data)));
+        await warmPages(centerPage);
       });
 
       pageFlip.on("changeOrientation", async () => {
-        await warmPages(currentLogicalPage());
+        await warmPages(currentPdfPage());
       });
 
-      updateCounter();
       loadingEl.classList.add("hidden");
     } catch (err) {
       console.error(err);
-      loadingEl.innerHTML = `
-        <div style="max-width:520px;text-align:center;padding:24px;font-family:Arial,sans-serif;color:#7b2130">
-          <strong>Non riesco ad aprire la tesi.</strong><br><br>
-          Verifica che <code>tesi.pdf</code> sia nella stessa cartella di questa pagina e che il sito sia aperto tramite HTTPS.
-        </div>`;
+      loadingEl.classList.add("hidden");
     }
   }
-
-  prevBtn.addEventListener("click", goPrev);
-  prevSmallBtn.addEventListener("click", goPrev);
-  nextBtn.addEventListener("click", goNext);
-  nextSmallBtn.addEventListener("click", goNext);
-
-  firstBtn.addEventListener("click", () => {
-    if (pageFlip) pageFlip.flip(0, "top");
-  });
-
-  lastBtn.addEventListener("click", () => {
-    if (pageFlip) pageFlip.flip(numPages - 1, "top");
-  });
-
-  fullscreenBtn.addEventListener("click", toggleFullscreen);
-
-  document.addEventListener("fullscreenchange", () => {
-    const label = fullscreenBtn.querySelector("span");
-    if (label) label.textContent = document.fullscreenElement ? "Esci" : "Schermo intero";
-    setTimeout(() => warmPages(currentLogicalPage()), 120);
-  });
-
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "ArrowLeft") goPrev();
-    if (event.key === "ArrowRight") goNext();
-    if (event.key === "Home" && pageFlip) pageFlip.flip(0, "top");
-    if (event.key === "End" && pageFlip) pageFlip.flip(numPages - 1, "top");
-  });
 
   let resizeTimer = null;
   window.addEventListener("resize", () => {
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => warmPages(currentLogicalPage()), 220);
+    resizeTimer = setTimeout(() => warmPages(currentPdfPage()), 220);
   });
 
   init();
