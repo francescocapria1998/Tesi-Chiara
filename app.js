@@ -7,6 +7,9 @@
   const params = new URLSearchParams(window.location.search);
   const forceBook = params.get("mode") === "book";
   const isNarrowScreen = window.matchMedia("(max-width: 760px)").matches;
+  // Su desktop inseriamo il retro interno della copertina come pagina bianca.
+  // Su smartphone lo omettiamo, così dopo la cover si arriva subito alla prima pagina reale.
+  const hasInsideCoverBlank = !isNarrowScreen;
 
   const mobileLauncher = document.getElementById("mobile-launcher");
   const openBook = document.getElementById("open-book");
@@ -49,10 +52,24 @@
 
     const img = document.createElement("img");
     img.className = "cover-image";
-    img.src = "cover.png";
+    img.src = "cover-generale.png";
     img.alt = "Copertina della tesi";
 
     inner.appendChild(img);
+    page.appendChild(inner);
+    return page;
+  }
+
+
+  function createInsideCoverBlankPage() {
+    const page = document.createElement("div");
+    page.className = "page inside-cover-blank rendered";
+    page.dataset.kind = "inside-cover";
+
+    const inner = document.createElement("div");
+    inner.className = "page-inner";
+    inner.setAttribute("aria-label", "Retro interno della copertina");
+
     page.appendChild(inner);
     return page;
   }
@@ -123,11 +140,16 @@
     return job;
   }
 
+  function bookIndexToPdfPage(index) {
+    // Desktop: 0 = cover, 1 = retro bianco, 2 = PDF 1.
+    // Mobile:  0 = cover, 1 = PDF 1.
+    const pdfPage = hasInsideCoverBlank ? index - 1 : index;
+    return Math.max(1, Math.min(numPages, pdfPage));
+  }
+
   function currentPdfPage() {
     if (!pageFlip) return 1;
-    const index = pageFlip.getCurrentPageIndex();
-    // indice 0 = cover, indice 1 = pagina PDF 1
-    return Math.max(1, Math.min(numPages, index));
+    return bookIndexToPdfPage(pageFlip.getCurrentPageIndex());
   }
 
   function unloadFarPages(centerPage) {
@@ -167,6 +189,9 @@
 
       const fragment = document.createDocumentFragment();
       fragment.appendChild(createCoverPage());
+      if (hasInsideCoverBlank) {
+        fragment.appendChild(createInsideCoverBlankPage());
+      }
       for (let i = 1; i <= numPages; i++) {
         fragment.appendChild(createPdfPageShell(i));
       }
@@ -195,8 +220,7 @@
       pageFlip.loadFromHTML(bookEl.querySelectorAll(".page"));
 
       pageFlip.on("flip", async (event) => {
-        const centerPage = Math.max(1, Math.min(numPages, Number(event.data)));
-        await warmPages(centerPage);
+        await warmPages(bookIndexToPdfPage(Number(event.data)));
       });
 
       pageFlip.on("changeOrientation", async () => {

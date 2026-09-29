@@ -1,22 +1,15 @@
-FLIPBOOK IBRIDO - TESI CHIARA
-=============================
+VERSIONE IBRIDA - RETRO COPERTINA BIANCO
+========================================
 
-Comportamento:
-- Desktop / tablet largo: mostra direttamente il flipbook.
-- Smartphone dentro Google Sites: mostra la copertina + pulsante "Sfoglia la tesi".
-- Il pulsante apre la stessa pagina con ?mode=book in una nuova scheda,
-  mostrando il flipbook a pagina singola ottimizzato per telefono.
+Desktop:
+- copertina esterna
+- girando la copertina: pagina sinistra bianca (retro copertina)
+- a destra: prima pagina reale del PDF
+- poi sfoglio normale a doppia pagina
 
-FILE DA SOSTITUIRE SU GITHUB
-----------------------------
-index.html
-style.css
-app.js
+Smartphone:
+- nel sito: copertina + pulsante "Sfoglia la tesi"
+- nella vista dedicata: copertina -> prima pagina PDF, senza pagina bianca intermedia
 
-cover.png e tesi.pdf possono rimanere quelli già presenti.
-
-URL Google Sites (NON cambia):
-https://francescocapria1998.github.io/Tesi-Chiara/
-
-URL modalità libro su smartphone:
-https://francescocapria1998.github.io/Tesi-Chiara/?mode=book
+Per aggiornare GitHub è sufficiente sostituire app.js.
+Gli altri file sono inclusi per comodità.
