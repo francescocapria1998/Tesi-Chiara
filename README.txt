@@ -1,15 +1,30 @@
-VERSIONE IBRIDA - RETRO COPERTINA BIANCO
-========================================
+VERSIONE DEFINITIVA - SOLO TESI SFOGLIABILE
+==========================================
 
-Desktop:
-- copertina esterna
-- girando la copertina: pagina sinistra bianca (retro copertina)
-- a destra: prima pagina reale del PDF
-- poi sfoglio normale a doppia pagina
+Questa versione NON mostra:
+- copertina personalizzata
+- pulsante "Sfoglia la tesi"
+- titoli
+- barre
+- controlli
 
-Smartphone:
-- nel sito: copertina + pulsante "Sfoglia la tesi"
-- nella vista dedicata: copertina -> prima pagina PDF, senza pagina bianca intermedia
+Aprendo il link GitHub Pages si vede direttamente il PDF,
+sfogliabile come un libro.
 
-Per aggiornare GitHub è sufficiente sostituire app.js.
-Gli altri file sono inclusi per comodità.
+DESKTOP:
+- prima pagina del PDF mostrata da sola a destra
+- dopo lo sfoglio: doppie pagine
+
+SMARTPHONE:
+- una pagina alla volta
+- sfoglio con tocco/trascinamento
+
+FILE DA SOSTITUIRE SU GITHUB:
+- index.html
+- style.css
+- app.js
+
+Il file tesi.pdf può rimanere quello già presente nel repository.
+
+LINK:
+https://francescocapria1998.github.io/Tesi-Chiara/

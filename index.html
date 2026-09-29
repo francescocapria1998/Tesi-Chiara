@@ -3,26 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f7f2e9">
-  <title>Tesi Chiara Cambareri</title>
+  <meta name="theme-color" content="#ffffff">
+  <title>Tesi di Laurea - Chiara Cambareri</title>
+
   <link rel="stylesheet" href="style.css">
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
 </head>
-<body>
-  <!-- Vista mobile incorporata in Google Sites -->
-  <main id="mobile-launcher" class="mobile-launcher" hidden>
-    <img class="mobile-cover" src="cover-generale.png" alt="Copertina della tesi di Chiara Cambareri">
-    <a id="open-book" class="open-book" href="?mode=book" target="_blank" rel="noopener">
-      Sfoglia la tesi
-      <span aria-hidden="true">›</span>
-    </a>
-  </main>
 
-  <!-- Flipbook vero e proprio: desktop o apertura dedicata da smartphone -->
-  <main id="viewer" class="viewer" hidden>
+<body>
+  <main id="viewer">
     <div id="book"></div>
-    <div id="loading" aria-hidden="true"></div>
+
+    <div id="loading" aria-label="Caricamento della tesi">
+      <div class="spinner"></div>
+    </div>
   </main>
 
   <script src="app.js"></script>
