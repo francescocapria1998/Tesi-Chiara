@@ -4,11 +4,35 @@
   const PDF_URL = "tesi.pdf";
   const KEEP_RADIUS = 4;
 
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  const params = new URLSearchParams(window.location.search);
+  const forceBook = params.get("mode") === "book";
+  const isNarrowScreen = window.matchMedia("(max-width: 760px)").matches;
 
+  const mobileLauncher = document.getElementById("mobile-launcher");
+  const openBook = document.getElementById("open-book");
+  const viewer = document.getElementById("viewer");
   const bookEl = document.getElementById("book");
   const loadingEl = document.getElementById("loading");
+
+  // Costruisce un URL robusto per aprire il flipbook dedicato.
+  const dedicatedUrl = new URL(window.location.href);
+  dedicatedUrl.searchParams.set("mode", "book");
+  openBook.href = dedicatedUrl.toString();
+
+  // Dentro Google Sites su telefono mostriamo solo copertina + pulsante.
+  if (isNarrowScreen && !forceBook) {
+    mobileLauncher.hidden = false;
+    viewer.hidden = true;
+    return;
+  }
+
+  // Desktop oppure apertura dedicata da smartphone: mostra il libro.
+  document.body.classList.add("book-mode");
+  mobileLauncher.hidden = true;
+  viewer.hidden = false;
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
   let pdfDoc = null;
   let pageFlip = null;
@@ -56,10 +80,8 @@
   }
 
   function wantedCssPageWidth() {
-    const viewer = document.getElementById("viewer");
-    const portrait = window.matchMedia("(max-width: 760px)").matches;
-    const visiblePages = portrait ? 1 : 2;
-    const available = Math.max(320, viewer.clientWidth - 40);
+    const visiblePages = window.matchMedia("(max-width: 760px)").matches ? 1 : 2;
+    const available = Math.max(300, viewer.clientWidth - (visiblePages === 1 ? 10 : 40));
     return Math.min(720, available / visiblePages);
   }
 
@@ -94,7 +116,7 @@
 
       el.classList.add("rendered");
     })()
-      .catch(err => console.error(`Errore nel rendering della pagina ${pageNum}:`, err))
+      .catch(err => console.error(`Errore pagina ${pageNum}:`, err))
       .finally(() => renderJobs.delete(pageNum));
 
     renderJobs.set(pageNum, job);
@@ -104,12 +126,12 @@
   function currentPdfPage() {
     if (!pageFlip) return 1;
     const index = pageFlip.getCurrentPageIndex();
+    // indice 0 = cover, indice 1 = pagina PDF 1
     return Math.max(1, Math.min(numPages, index));
   }
 
   function unloadFarPages(centerPage) {
-    const pages = bookEl.querySelectorAll(".pdf-page");
-    pages.forEach(el => {
+    bookEl.querySelectorAll(".pdf-page").forEach(el => {
       const n = Number(el.dataset.page);
       if (Math.abs(n - centerPage) <= KEEP_RADIUS) return;
 
@@ -156,9 +178,9 @@
         width: 595,
         height: 842,
         size: "stretch",
-        minWidth: 300,
+        minWidth: 280,
         maxWidth: 720,
-        minHeight: 425,
+        minHeight: 397,
         maxHeight: 1020,
         showCover: true,
         usePortrait: true,

@@ -1,33 +1,22 @@
-VERSIONE MINIMALE DEL FLIPBOOK
-==============================
+FLIPBOOK IBRIDO - TESI CHIARA
+=============================
 
-Questa versione mostra soltanto il libro sfogliabile:
-- copertina esterna personalizzata (cover.png)
-- pagine interne del PDF (tesi.pdf)
-- nessun titolo, pulsante o barra comandi
+Comportamento:
+- Desktop / tablet largo: mostra direttamente il flipbook.
+- Smartphone dentro Google Sites: mostra la copertina + pulsante "Sfoglia la tesi".
+- Il pulsante apre la stessa pagina con ?mode=book in una nuova scheda,
+  mostrando il flipbook a pagina singola ottimizzato per telefono.
 
-FILE DA CARICARE SU GITHUB NEL REPOSITORY Tesi-Chiara:
-- index.html
-- style.css
-- app.js
-- tesi.pdf
-- cover.png
+FILE DA SOSTITUIRE SU GITHUB
+----------------------------
+index.html
+style.css
+app.js
 
-Se il repository contiene già file con lo stesso nome, sostituiscili.
+cover.png e tesi.pdf possono rimanere quelli già presenti.
 
-GitHub Pages:
-L'URL del sito è:
+URL Google Sites (NON cambia):
 https://francescocapria1998.github.io/Tesi-Chiara/
 
-Google Sites:
-Usa Inserisci -> Incorpora -> URL
-oppure il seguente iframe:
-
-<iframe
-  src="https://francescocapria1998.github.io/Tesi-Chiara/"
-  width="100%"
-  height="780"
-  style="border:0;"
-  allow="fullscreen"
-  allowfullscreen>
-</iframe>
+URL modalità libro su smartphone:
+https://francescocapria1998.github.io/Tesi-Chiara/?mode=book
