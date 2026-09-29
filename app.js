@@ -1,4 +1,3 @@
-
 (() => {
   "use strict";
 
@@ -18,10 +17,30 @@
 
   const renderJobs = new Map();
 
+  function isMobile() {
+    return window.matchMedia("(max-width: 760px)").matches;
+  }
+
+  function createBlankPage() {
+    const page = document.createElement("div");
+    page.className = "page blank-page rendered";
+    page.dataset.density = "soft";
+
+    const inner = document.createElement("div");
+    inner.className = "page-inner";
+    inner.setAttribute("aria-hidden", "true");
+
+    page.appendChild(inner);
+    return page;
+  }
+
   function createPdfPageShell(pageNum) {
     const page = document.createElement("div");
     page.className = "page pdf-page";
     page.dataset.page = String(pageNum);
+
+    // Tutte le pagine, compresa la prima, devono comportarsi come carta.
+    page.dataset.density = "soft";
 
     const inner = document.createElement("div");
     inner.className = "page-inner";
@@ -38,10 +57,6 @@
     page.append(inner);
 
     return page;
-  }
-
-  function isMobile() {
-    return window.matchMedia("(max-width: 760px)").matches;
   }
 
   function wantedCssPageWidth() {
@@ -103,9 +118,16 @@
   function currentPdfPage() {
     if (!pageFlip) return 1;
 
+    // Su desktop c'è una pagina bianca iniziale solo per mantenere
+    // la prima pagina del PDF sul lato destro del libro.
+    const blankOffset = isMobile() ? 0 : 1;
+
     return Math.max(
       1,
-      Math.min(numPages, pageFlip.getCurrentPageIndex() + 1)
+      Math.min(
+        numPages,
+        pageFlip.getCurrentPageIndex() + 1 - blankOffset
+      )
     );
   }
 
@@ -156,6 +178,17 @@
 
       const fragment = document.createDocumentFragment();
 
+      /*
+       * Desktop: aggiungiamo una pagina bianca iniziale.
+       * In questo modo la pagina 1 del PDF compare a destra, ma NON viene
+       * trattata come copertina rigida.
+       *
+       * Mobile: nessuna pagina bianca; si parte direttamente da pagina 1.
+       */
+      if (!isMobile()) {
+        fragment.appendChild(createBlankPage());
+      }
+
       for (let i = 1; i <= numPages; i++) {
         fragment.appendChild(createPdfPageShell(i));
       }
@@ -176,7 +209,14 @@
         minHeight: 382,
         maxHeight: 1020,
 
-        showCover: true,
+        /*
+         * IMPORTANTE:
+         * showCover:true trasforma automaticamente prima e ultima pagina
+         * in pagine "hard". Disattivandolo, la pagina 1 si piega come tutte
+         * le altre.
+         */
+        showCover: false,
+
         usePortrait: true,
         autoSize: true,
 
@@ -184,8 +224,9 @@
         maxShadowOpacity: 0.32,
 
         mobileScrollSupport: false,
-        flippingTime: 700,
+        flippingTime: 780,
 
+        startPage: 0,
         startZIndex: 0
       });
 
@@ -194,9 +235,14 @@
       );
 
       pageFlip.on("flip", async event => {
+        const blankOffset = isMobile() ? 0 : 1;
+
         const centerPage = Math.max(
           1,
-          Math.min(numPages, Number(event.data) + 1)
+          Math.min(
+            numPages,
+            Number(event.data) + 1 - blankOffset
+          )
         );
 
         await warmPages(centerPage);
