@@ -3,6 +3,8 @@
 
   const PDF_URL = "tesi.pdf";
   const KEEP_RADIUS = 4;
+  const BASE_W = 595;
+  const BASE_H = 842;
 
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
@@ -14,11 +16,30 @@
   let pdfDoc = null;
   let pageFlip = null;
   let numPages = 0;
-
   const renderJobs = new Map();
 
   function isMobile() {
     return window.matchMedia("(max-width: 760px)").matches;
+  }
+
+  function getPageSize() {
+    const mobile = isMobile();
+    const sideGap = mobile ? 14 : 34;
+    const topGap = mobile ? 14 : 24;
+
+    const availableW = Math.max(260, viewer.clientWidth - sideGap * 2);
+    const availableH = Math.max(360, viewer.clientHeight - topGap * 2);
+    const visiblePages = mobile ? 1 : 2;
+
+    const scale = Math.min(
+      (availableW / visiblePages) / BASE_W,
+      availableH / BASE_H
+    );
+
+    return {
+      width: Math.max(240, Math.floor(BASE_W * scale)),
+      height: Math.max(340, Math.floor(BASE_H * scale))
+    };
   }
 
   function createBlankPage() {
@@ -38,8 +59,6 @@
     const page = document.createElement("div");
     page.className = "page pdf-page";
     page.dataset.page = String(pageNum);
-
-    // Tutte le pagine, compresa la prima, devono comportarsi come carta.
     page.dataset.density = "soft";
 
     const inner = document.createElement("div");
@@ -59,32 +78,22 @@
     return page;
   }
 
-  function wantedCssPageWidth() {
-    const visiblePages = isMobile() ? 1 : 2;
-    const horizontalMargin = isMobile() ? 12 : 48;
-    const available = Math.max(280, viewer.clientWidth - horizontalMargin);
-
-    return Math.min(720, available / visiblePages);
-  }
-
   async function renderPage(pageNum) {
     if (!pdfDoc || pageNum < 1 || pageNum > numPages) return;
     if (renderJobs.has(pageNum)) return renderJobs.get(pageNum);
 
     const el = bookEl.querySelector(`.pdf-page[data-page="${pageNum}"]`);
-
     if (!el || el.classList.contains("rendered")) return;
 
     const job = (async () => {
       const pdfPage = await pdfDoc.getPage(pageNum);
       const baseViewport = pdfPage.getViewport({ scale: 1 });
 
-      const cssWidth = wantedCssPageWidth();
+      const cssWidth = getPageSize().width;
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-
       const targetWidth = Math.min(
-        1500,
-        Math.max(760, cssWidth * dpr * 1.15)
+        1600,
+        Math.max(760, cssWidth * dpr * 1.2)
       );
 
       const scale = targetWidth / baseViewport.width;
@@ -104,12 +113,8 @@
 
       el.classList.add("rendered");
     })()
-      .catch(err => {
-        console.error(`Errore rendering pagina ${pageNum}:`, err);
-      })
-      .finally(() => {
-        renderJobs.delete(pageNum);
-      });
+      .catch(err => console.error(`Errore rendering pagina ${pageNum}:`, err))
+      .finally(() => renderJobs.delete(pageNum));
 
     renderJobs.set(pageNum, job);
     return job;
@@ -117,9 +122,6 @@
 
   function currentPdfPage() {
     if (!pageFlip) return 1;
-
-    // Su desktop c'è una pagina bianca iniziale solo per mantenere
-    // la prima pagina del PDF sul lato destro del libro.
     const blankOffset = isMobile() ? 0 : 1;
 
     return Math.max(
@@ -134,11 +136,9 @@
   function unloadFarPages(centerPage) {
     bookEl.querySelectorAll(".pdf-page").forEach(el => {
       const n = Number(el.dataset.page);
-
       if (Math.abs(n - centerPage) <= KEEP_RADIUS) return;
 
       const canvas = el.querySelector("canvas");
-
       if (canvas && (canvas.width || canvas.height)) {
         canvas.width = 0;
         canvas.height = 0;
@@ -149,15 +149,8 @@
 
   async function warmPages(centerPage) {
     const jobs = [];
-
-    for (
-      let n = centerPage - KEEP_RADIUS;
-      n <= centerPage + KEEP_RADIUS;
-      n++
-    ) {
-      if (n >= 1 && n <= numPages) {
-        jobs.push(renderPage(n));
-      }
+    for (let n = centerPage - KEEP_RADIUS; n <= centerPage + KEEP_RADIUS; n++) {
+      if (n >= 1 && n <= numPages) jobs.push(renderPage(n));
     }
 
     await Promise.allSettled(jobs);
@@ -166,25 +159,17 @@
 
   async function init() {
     try {
-      const task = pdfjsLib.getDocument({
+      pdfDoc = await pdfjsLib.getDocument({
         url: PDF_URL,
         disableAutoFetch: false,
         disableStream: false,
         disableRange: false
-      });
+      }).promise;
 
-      pdfDoc = await task.promise;
       numPages = pdfDoc.numPages;
 
       const fragment = document.createDocumentFragment();
 
-      /*
-       * Desktop: aggiungiamo una pagina bianca iniziale.
-       * In questo modo la pagina 1 del PDF compare a destra, ma NON viene
-       * trattata come copertina rigida.
-       *
-       * Mobile: nessuna pagina bianca; si parte direttamente da pagina 1.
-       */
       if (!isMobile()) {
         fragment.appendChild(createBlankPage());
       }
@@ -197,28 +182,16 @@
 
       await warmPages(1);
 
+      const pageSize = getPageSize();
+
       pageFlip = new St.PageFlip(bookEl, {
-        width: 595,
-        height: 842,
+        width: pageSize.width,
+        height: pageSize.height,
+        size: "fixed",
 
-        size: "stretch",
-
-        minWidth: 270,
-        maxWidth: 720,
-
-        minHeight: 382,
-        maxHeight: 1020,
-
-        /*
-         * IMPORTANTE:
-         * showCover:true trasforma automaticamente prima e ultima pagina
-         * in pagine "hard". Disattivandolo, la pagina 1 si piega come tutte
-         * le altre.
-         */
         showCover: false,
-
         usePortrait: true,
-        autoSize: true,
+        autoSize: false,
 
         drawShadow: true,
         maxShadowOpacity: 0.32,
@@ -230,9 +203,7 @@
         startZIndex: 0
       });
 
-      pageFlip.loadFromHTML(
-        bookEl.querySelectorAll(".page")
-      );
+      pageFlip.loadFromHTML(bookEl.querySelectorAll(".page"));
 
       pageFlip.on("flip", async event => {
         const blankOffset = isMobile() ? 0 : 1;
@@ -259,14 +230,23 @@
     }
   }
 
+  let oldMobile = isMobile();
+  let oldW = window.innerWidth;
+  let oldH = window.innerHeight;
   let resizeTimer = null;
 
   window.addEventListener("resize", () => {
     clearTimeout(resizeTimer);
 
     resizeTimer = setTimeout(() => {
-      warmPages(currentPdfPage());
-    }, 220);
+      const mobileChanged = isMobile() !== oldMobile;
+      const widthChanged = Math.abs(window.innerWidth - oldW) > 120;
+      const heightChanged = Math.abs(window.innerHeight - oldH) > 120;
+
+      if (mobileChanged || widthChanged || heightChanged) {
+        window.location.reload();
+      }
+    }, 280);
   });
 
   init();
